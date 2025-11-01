@@ -1,0 +1,258 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import type { Product, ProductImage } from '../../lib/types';
+import { formatPrice, whatsappLinkFor } from '../../lib/utils';
+import { supabase } from '../../lib/supabaseClient';
+
+interface PageProps {
+  params: { id: string };
+}
+
+const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL as string | undefined;
+const anon = import.meta.env.PUBLIC_SUPABASE_ANON_KEY as string | undefined;
+
+export async function getStaticPaths() {
+  // Build-time SSG: enumerate active product ids
+  if (!import.meta.env.PUBLIC_SUPABASE_URL || !import.meta.env.PUBLIC_SUPABASE_ANON_KEY) {
+    return [];
+  }
+  try {
+    const api = `${import.meta.env.PUBLIC_SUPABASE_URL}/rest/v1/products?select=id&active=eq.true`;
+    const res = await fetch(api, {
+      headers: { apikey: import.meta.env.PUBLIC_SUPABASE_ANON_KEY, Authorization: `Bearer ${import.meta.env.PUBLIC_SUPABASE_ANON_KEY}` },
+    });
+    if (!res.ok) return [];
+    const rows = (await res.json()) as Array<{ id: number }>;
+    return rows.map((r) => ({ params: { id: String(r.id) } }));
+  } catch {
+    return [];
+  }
+}
+
+const idParam = Astro.params.id;
+const id = Number(idParam);
+
+let product: Product | null = null;
+let images: ProductImage[] = [];
+let error: string | null = null;
+
+if (!supabaseUrl || !anon) {
+  error = 'Missing Supabase env config';
+} else if (!id || id < 1) {
+  error = 'Invalid product id';
+} else {
+  const { data: rows, error: qErr } = await supabase
+    .from('products')
+    .select('id,name,description,price,category,image_url,whatsapp_number,product_images(id,image_url,display_order,alt_text)')
+    .eq('id', id)
+    .limit(1);
+
+  if (qErr) {
+    error = `Query failed: ${qErr.message}`;
+  } else if (Array.isArray(rows) && rows[0]) {
+    const r: any = rows[0];
+    product = {
+      id: r.id,
+      name: r.name,
+      description: r.description,
+      price: Number(r.price),
+      category: r.category,
+      image_url: r.image_url,
+      whatsapp_number: r.whatsapp_number,
+      active: true,
+    };
+    images = Array.isArray(r.product_images)
+      ? r.product_images
+          .map((img: any, i: number) => ({
+            id: img.id ?? i,
+            product_id: r.id,
+            image_url: img.image_url,
+            alt: img.alt_text ?? r.name,
+            position: img.display_order ?? i,
+          }))
+          .sort((a: any, b: any) => (a.position ?? 0) - (b.position ?? 0))
+      : [];
+    if (!images.length && product.image_url) {
+      images = [{ id: 0, product_id: product.id, image_url: product.image_url, alt: product.name, position: 0 }];
+    }
+  } else {
+    error = 'Not found';
+  }
+}
+
+const wa = product ? whatsappLinkFor(product) : '#';
+const publicDefaultWa = import.meta.env.PUBLIC_DEFAULT_WA_NUMBER as string | undefined;
+const phoneRaw = (product?.whatsapp_number || publicDefaultWa || '');
+const phoneDigits = (phoneRaw || '').replace(/\D/g, '');
+---
+
+<Layout
+  title={`${product?.name ?? 'Product'} — Byas Store`}
+  description={(product?.description ?? '').slice(0, 160) || `${product?.name ?? 'Product'} details`}
+  canonical={Astro.url.href}
+  ogImage={(images[0]?.image_url) ?? (product?.image_url ?? undefined)}
+>
+  {product ? (
+    <script slot="head" type="application/ld+json">
+      {JSON.stringify({
+        '@context': 'https://schema.org',
+        '@type': 'Product',
+        name: product.name,
+        description: product.description || undefined,
+        category: product.category || undefined,
+        sku: String(product.id),
+        image: images.length ? images.map((i) => i.image_url) : (product.image_url ? [product.image_url] : undefined),
+        offers: {
+          '@type': 'Offer',
+          priceCurrency: 'INR',
+          price: product.price,
+          availability: 'https://schema.org/InStock',
+          url: Astro.url.href,
+        },
+      })}
+    </script>
+  ) : null}
+  <main class="mx-auto max-w-6xl p-4 md:p-8">
+    {error || !product ? (
+      <section class="text-center text-gray-600 dark:text-gray-300">
+        <h1 class="mb-2 text-xl font-semibold">Product not found</h1>
+        <p class="mb-6">The product you are looking for does not exist.</p>
+        <a href="/" class="rounded border border-gray-300 px-3 py-2 text-sm hover:bg-gray-100 dark:border-gray-700 dark:hover:bg-gray-800">Back to catalog</a>
+      </section>
+    ) : (
+      <section>
+        <nav aria-label="Breadcrumb" class="mb-4 text-sm text-gray-500 dark:text-gray-400">
+          <a href="/" class="hover:underline">Home</a> 
+          <span aria-hidden="true">/</span> 
+          <a href={`/?category=${encodeURIComponent(product?.category || '')}`} class="hover:underline">{product?.category || 'General'}</a> 
+          <span aria-hidden="true">/</span> 
+          <span class="text-gray-700 dark:text-gray-200" aria-current="page">{product?.name ?? ''}</span>
+        </nav>
+
+        <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+          <!-- Media gallery -->
+          <div class="relative">
+            <div class="relative aspect-[4/3] overflow-hidden rounded-md border border-gray-200 dark:border-gray-700">
+              <img id="hero-image" src={(images[0]?.image_url) ?? '/favicon.svg'} alt={product?.name ?? ''} class="h-full w-full object-cover transition-transform duration-200 ease-out" />
+            </div>
+            {images.length > 1 ? (
+              <div class="mt-3 grid grid-cols-6 gap-2">
+                {images.slice(0, 6).map((img, i) => (
+                  <button class="group relative aspect-square overflow-hidden rounded border border-gray-200 dark:border-gray-700" aria-label={`Preview image ${i+1}`} data-idx={i}>
+                    <img src={img.image_url} alt={img.alt || (product?.name ?? '')} class="h-full w-full object-cover group-hover:opacity-80" />
+                  </button>
+                ))}
+              </div>
+            ) : null}
+          </div>
+
+          <!-- Details -->
+          <div>
+            <h1 class="mb-2 text-xl font-semibold text-gray-900 dark:text-gray-100">{product?.name ?? ''}</h1>
+            <p class="mb-4 text-sm text-gray-600 dark:text-gray-400">{product?.category || 'General'}</p>
+            <div class="mb-4 text-2xl font-bold text-gray-900 dark:text-gray-100">{formatPrice(product?.price ?? 0)}</div>
+
+            <div class="mb-4 flex items-center gap-2">
+              <a href={wa} target="_blank" rel="noopener noreferrer" class="inline-flex items-center rounded-md border border-green-600 px-4 py-2 text-sm text-green-700 hover:bg-green-50 dark:border-green-500 dark:text-green-400 dark:hover:bg-green-900/20">WhatsApp</a>
+              {phoneDigits && (
+                <button
+                  type="button"
+                  data-copy-phone
+                  data-phone={phoneDigits}
+                  class="relative inline-flex items-center justify-center rounded-md border border-gray-200 w-8 h-8 text-[11px] text-gray-600 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800 transition-all duration-500 ease-out"
+                  aria-label="Copy phone number"
+                >
+                  <span data-tooltip class="absolute -top-10 left-1/2 -translate-x-1/2 z-10 rounded bg-black/80 text-white text-[10px] px-2 py-0.5 opacity-0 pointer-events-none transition-opacity duration-200">Copy number</span>
+                  <span data-label class="absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2 opacity-0 pointer-events-none transition-opacity duration-200">Copied</span>
+                  <span class="absolute right-2 top-1/2 -translate-y-1/2" aria-hidden="true">
+                    <span data-icon-copy>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M16 1H4a2 2 0 00-2 2v12h2V3h12V1zm3 4H8a2 2 0 00-2 2v12a2 2 0 002 2h11a2 2 0 002-2V7a 2 0 00-2-2zm0 14H8V7h11v12z"/></svg>
+                    </span>
+                    <span data-icon-check class="hidden">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+                    </span>
+                  </span>
+                </button>
+              )}
+            </div>
+
+            <details class="mb-4 rounded border border-gray-200 p-3 dark:border-gray-700">
+              <summary class="cursor-pointer text-sm font-medium text-gray-800 dark:text-gray-200">Description</summary>
+              <p class="mt-2 whitespace-pre-wrap text-sm text-gray-700 dark:text-gray-300">{product?.description || '—'}</p>
+            </details>
+
+            <div class="text-xs text-gray-500 dark:text-gray-400">SKU: {product?.id ?? ''}</div>
+          </div>
+        </div>
+      </section>
+    )}
+  </main>
+
+  <script>
+    // Thumbnail click to swap hero image, basic zoom on click; motion-safe only
+    document.addEventListener('DOMContentLoaded', () => {
+      const hero = document.getElementById('hero-image') as HTMLImageElement | null;
+      const thumbs = Array.from(document.querySelectorAll('[data-idx]')) as HTMLElement[];
+      if (hero) {
+        hero.addEventListener('click', () => {
+          const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+          if (reduced) return;
+          const zoomed = hero.style.transform === 'scale(1.5)';
+          hero.style.transform = zoomed ? 'scale(1)' : 'scale(1.5)';
+        });
+      }
+      thumbs.forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const idxAttr = btn.getAttribute('data-idx');
+          const idx = idxAttr ? parseInt(idxAttr, 10) : 0;
+          const imgs = Array.from(document.querySelectorAll('[data-idx] img')) as HTMLImageElement[];
+          const target = imgs[idx] as HTMLImageElement | undefined;
+          if (hero && target) {
+            hero.src = target.src;
+          }
+        });
+      });
+
+      // Copy phone number button behavior (mirrors ProductCard)
+      const copyBtn = document.querySelector('[data-copy-phone]') as HTMLButtonElement | null;
+      if (copyBtn) {
+        const phone = copyBtn.getAttribute('data-phone') || '';
+        const labelEl = copyBtn.querySelector('[data-label]') as HTMLElement | null;
+        const iconCopy = copyBtn.querySelector('[data-icon-copy]') as HTMLElement | null;
+        const iconCheck = copyBtn.querySelector('[data-icon-check]') as HTMLElement | null;
+        function setExpanded(on: boolean) {
+          if (on) {
+            copyBtn.classList.add('expanded');
+            if (labelEl) { labelEl.classList.remove('opacity-0'); labelEl.classList.add('opacity-100'); }
+            if (iconCopy) iconCopy.classList.add('hidden');
+            if (iconCheck) iconCheck.classList.remove('hidden');
+          } else {
+            copyBtn.classList.remove('expanded');
+            if (labelEl) { labelEl.classList.add('opacity-0'); labelEl.classList.remove('opacity-100'); }
+            if (iconCheck) iconCheck.classList.add('hidden');
+            if (iconCopy) iconCopy.classList.remove('hidden');
+          }
+        }
+        copyBtn.addEventListener('click', async () => {
+          if (!phone) return;
+          try {
+            await navigator.clipboard.writeText(phone);
+            setExpanded(true);
+            setTimeout(() => { setExpanded(false); }, 1000);
+          } catch {}
+        });
+      }
+    });
+  </script>
+
+  <style>
+    @media (prefers-reduced-motion: reduce) {
+      #hero-image { transition: none !important; }
+    }
+    /* Copy button expansion and tooltip */
+    [data-copy-phone].expanded { width: 6rem; }
+    [data-copy-phone] [data-label] { transition: opacity .2s ease; }
+    [data-copy-phone]:hover [data-tooltip],
+    [data-copy-phone]:focus-visible [data-tooltip] { opacity: 1; }
+  </style>
+</Layout>

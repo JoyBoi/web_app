@@ -1,11 +1,77 @@
 ---
-import Welcome from '../components/Welcome.astro';
 import Layout from '../layouts/Layout.astro';
+import ProductGrid from '../components/ProductGrid.astro';
+import type { Product, ProductImage } from '../lib/types';
+import { canonicalCategory, BASIC_CATEGORIES } from '../lib/utils';
+import { supabase } from '../lib/supabaseClient';
 
-// Welcome to Astro! Wondering what to do next? Check out the Astro documentation at https://docs.astro.build
-// Don't want to use any of this? Delete everything in this file, the `assets`, `components`, and `layouts` directories, and start fresh.
+const env = import.meta.env as { PUBLIC_SUPABASE_URL?: string; PUBLIC_SUPABASE_ANON_KEY?: string };
+const supabaseUrl = env.PUBLIC_SUPABASE_URL;
+const supabaseAnonKey = env.PUBLIC_SUPABASE_ANON_KEY;
+
+let products: Product[] = [];
+let imagesByProduct: Record<number, ProductImage[]> = {};
+let categories: string[] = ['fashion', 'beauty', 'footwear'];
+let fetchError: string | null = null;
+
+if (supabaseUrl && supabaseAnonKey) {
+  const { data: rows, error: qErr } = await supabase
+    .from('products')
+    .select('id,name,description,price,category,image_url,whatsapp_number,product_images(id,image_url,display_order,alt_text)')
+    .eq('active', true)
+    .order('inserted_at', { ascending: false });
+
+  if (qErr) {
+    fetchError = `Query failed: ${qErr.message}`;
+  } else if (Array.isArray(rows)) {
+    products = rows.map((r: any) => ({
+      id: r.id,
+      name: r.name,
+      description: r.description,
+      price: Number(r.price),
+      category: r.category,
+      image_url: r.image_url,
+      whatsapp_number: r.whatsapp_number,
+      active: true,
+    }));
+    imagesByProduct = rows.reduce((acc: Record<number, ProductImage[]>, r: any) => {
+      const imgs: ProductImage[] = Array.isArray(r.product_images)
+        ? r.product_images
+            .map((img: any, i: number) => ({
+              id: img.id ?? i,
+              product_id: r.id,
+              image_url: img.image_url,
+              alt: img.alt_text ?? r.name,
+              position: img.display_order ?? i,
+            }))
+            .sort((a: any, b: any) => (a.position ?? 0) - (b.position ?? 0))
+        : [];
+      acc[r.id] = imgs.length ? imgs : (r.image_url ? [{ id: 0, product_id: r.id, image_url: r.image_url, alt: r.name, position: 0 }] : []);
+      return acc;
+    }, {} as Record<number, ProductImage[]>);
+
+    // Title bar should always show the enum categories in fixed order.
+    categories = ['fashion', 'beauty', 'footwear'];
+  }
+}
 ---
 
-<Layout>
-	<Welcome />
+<Layout
+  title="Byas Store — Catalog"
+  description="Browse our latest active products with fast static rendering"
+  canonical={Astro.url.href}
+  ogImage={products[0] ? (imagesByProduct[products[0].id]?.[0]?.image_url ?? products[0].image_url) : undefined}
+  categories={categories}
+>
+  <main>
+    {!supabaseUrl || !supabaseAnonKey ? (
+      <div class="mx-auto max-w-6xl p-8 text-center text-gray-500">Missing env: PUBLIC_SUPABASE_URL or PUBLIC_SUPABASE_ANON_KEY.</div>
+    ) : fetchError ? (
+      <div class="mx-auto max-w-6xl p-8 text-center text-red-600">{fetchError}</div>
+    ) : products.length === 0 ? (
+      <div class="mx-auto max-w-6xl p-8 text-center text-gray-500">No products yet. Add one via <a href="/admin" class="underline">/admin</a>.</div>
+    ) : (
+      <ProductGrid products={products} imagesByProduct={imagesByProduct} />
+    )}
+  </main>
 </Layout>

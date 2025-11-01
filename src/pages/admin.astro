@@ -1,0 +1,56 @@
+---
+import Layout from '../layouts/Layout.astro';
+import adminScriptUrl from '../scripts/admin-dashboard.ts?url';
+import { ADMIN_CATEGORIES } from '../lib/types';
+---
+
+<Layout>
+  <main class="mx-auto max-w-xl p-4">
+    <section id="auth" class="mb-6">
+      <h1 class="text-xl font-semibold mb-2">Admin</h1>
+      <form id="loginForm" class="grid gap-2">
+        <input name="email" type="email" placeholder="Email" class="border border-[var(--color-border)] bg-[var(--color-card)] text-[var(--color-text)] rounded p-2" required />
+        <input name="password" type="password" placeholder="Password" class="border border-[var(--color-border)] bg-[var(--color-card)] text-[var(--color-text)] rounded p-2" required />
+        <button type="submit" class="btn-primary">Sign In</button>
+      </form>
+      <div class="mt-2 flex items-center gap-2">
+        <p id="authStatus" class="text-sm text-[var(--color-muted)]"></p>
+        <button id="signOutBtn" class="ml-auto border border-[var(--color-border)] bg-[var(--color-card)] text-[var(--color-text)] rounded px-3 py-2 hidden">Sign Out</button>
+      </div>
+    </section>
+
+    <section id="upload" class="hidden">
+      <form id="productForm" class="grid gap-2" enctype="multipart/form-data">
+        <input name="name" placeholder="Name" class="border border-[var(--color-border)] bg-[var(--color-card)] text-[var(--color-text)] rounded p-2" required />
+        <textarea name="description" placeholder="Description" class="border border-[var(--color-border)] bg-[var(--color-card)] text-[var(--color-text)] rounded p-2"></textarea>
+        <input name="price" type="number" step="0.01" min="0.01" placeholder="Price" class="border border-[var(--color-border)] bg-[var(--color-card)] text-[var(--color-text)] rounded p-2" required />
+        <label class="text-sm font-medium text-[var(--color-text)]" for="category">Category</label>
+        <select name="category" id="category" class="border border-[var(--color-border)] bg-[var(--color-card)] text-[var(--color-text)] rounded p-2" required>
+          {ADMIN_CATEGORIES.map((c) => (
+            <option value={c}>{c.charAt(0).toUpperCase() + c.slice(1)}</option>
+          ))}
+        </select>
+        <input name="whatsapp_number" type="tel" inputmode="numeric" placeholder="WhatsApp (India +91 / 10-digit)" class="border border-[var(--color-border)] bg-[var(--color-card)] text-[var(--color-text)] rounded p-2" />
+        <div class="grid gap-2">
+          <label class="text-sm font-medium text-[var(--color-text)]">Product Images (2-5 required)</label>
+          <input name="image_uploads" type="file" accept="image/png,image/jpeg" multiple class="border border-[var(--color-border)] bg-[var(--color-card)] text-[var(--color-text)] rounded p-2" required />
+          <p class="text-xs text-[var(--color-muted)]">Select 2-5 images. First image will be the primary display image.</p>
+          <div id="imagePreview" class="grid-cols-2 gap-2 mt-2 hidden"></div>
+        </div>
+        <button type="submit" class="btn-primary">Upload Product</button>
+        <p id="formStatus" class="text-sm text-[var(--color-muted)]"></p>
+      </form>
+    </section>
+
+    <section id="analytics" class="hidden mt-8">
+      <h2 class="text-lg font-semibold mb-2">Analytics (last <span id="daysLabel">14</span> days)</h2>
+      <div class="flex items-center gap-2 mb-3">
+        <input id="daysInput" type="number" min="1" max="365" value="14" class="border border-[var(--color-border)] bg-[var(--color-card)] text-[var(--color-text)] rounded p-2 w-24" />
+        <button id="reloadAnalytics" class="border border-[var(--color-border)] bg-[var(--color-card)] text-[var(--color-text)] rounded px-3 py-2">Reload</button>
+      </div>
+      <div id="analyticsContainer" class="grid gap-4"></div>
+    </section>
+  </main>
+
+  <script type="module" src={adminScriptUrl}></script>
+</Layout>

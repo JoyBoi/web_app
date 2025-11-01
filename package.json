@@ -6,9 +6,19 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "astro": "astro"
+    "astro": "astro",
+    "seed:admin": "node scripts/create-temp-admin.mjs",
+    "seed:products": "node scripts/seed-products.mjs"
   },
   "dependencies": {
-    "astro": "^5.15.3"
+    "@supabase/supabase-js": "^2.46.1",
+    "astro": "^5.15.3",
+    "dotenv": "^16.4.5"
+  },
+  "devDependencies": {
+    "@astrojs/tailwind": "^5.1.0",
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.4.31",
+    "tailwindcss": "^3.4.14"
   }
 }

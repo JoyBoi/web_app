@@ -1,0 +1,61 @@
+---
+import ProductCard from './ProductCard.astro'
+import type { Product, ProductImage } from '../lib/types'
+import { canonicalCategory } from '../lib/utils'
+
+interface Props {
+  products: Product[]
+  imagesByProduct: Record<number, ProductImage[]>
+}
+const { products, imagesByProduct } = Astro.props as Props
+---
+<section aria-label="Products" class="mx-auto max-w-6xl p-4">
+  <div id="grid" class="grid gap-4 sm:gap-6 [grid-template-columns:repeat(auto-fit,minmax(220px,1fr))]">
+    {products.map((p) => (
+      <div class="h-full" data-name={p.name.toLowerCase()} data-category={canonicalCategory(p.category)}>
+        <ProductCard product={p} images={imagesByProduct[p.id] || []} />
+      </div>
+    ))}
+  </div>
+  <script>
+    // @ts-check
+    // Client-side filtering by search term and category param
+    document.addEventListener('DOMContentLoaded', () => {
+      const grid = document.getElementById('grid')
+      if (!grid) return
+      /** @type {HTMLElement[]} */
+      const items = Array.from(grid.children).filter((el): el is HTMLElement => el instanceof HTMLElement)
+      /** @type {string} */
+      let currentQ = ''
+      /** @type {string|undefined} */
+      let currentCategory
+      /** @type {(q: string | undefined, category: string | undefined) => void} */
+      const applyFilter = (q, category) => {
+        const qq = (q || '').trim().toLowerCase()
+        const cc = (category || '').trim().toLowerCase()
+        for (const el of items) {
+          const name = el.dataset?.name || ''
+          const cat = el.dataset?.category || ''
+          const matchQ = !qq || name.includes(qq)
+          const matchC = !cc || cat === cc
+          el.style.display = matchQ && matchC ? '' : 'none'
+        }
+      }
+      const url = new URL(window.location.href)
+      currentCategory = url.searchParams.get('category') || undefined
+      applyFilter(undefined, currentCategory || undefined)
+      window.addEventListener('byas:search', /** @type {(e: Event) => void} */ (e) => {
+        const ce = /** @type {CustomEvent} */ (e)
+        const detail = /** @type {{ q?: string }} */ (ce.detail || {})
+        currentQ = detail.q || ''
+        applyFilter(currentQ, currentCategory || undefined)
+      })
+      window.addEventListener('byas:category', /** @type {(e: Event) => void} */ (e) => {
+        const ce = /** @type {CustomEvent} */ (e)
+        const detail = /** @type {{ category?: string }} */ (ce.detail || {})
+        currentCategory = (detail.category || '').trim() || undefined
+        applyFilter(currentQ, currentCategory)
+      })
+    })
+  </script>
+</section>

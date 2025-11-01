@@ -1,0 +1,73 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Theme palettes via CSS variables. Accessible contrasts (>= 4.5:1 for body text). */
+@layer base {
+  :root[data-theme='light'] {
+    /* Cooler slate-tinted neutrals to harmonize with blue accent */
+    --color-bg: #f8fafc; /* slate-50 – subtle blueish white */
+    --color-card: #ffffff; /* card bg */
+    --color-text: #0f172a; /* slate-900 */
+    --color-muted: #475569; /* slate-600 */
+    --color-border: #e2e8f0; /* slate-200 */
+    --color-accent: #2563eb; /* blue-600 */
+    --color-on-accent: #ffffff;
+  }
+  :root[data-theme='dark'] {
+    /* Deep slate palette to avoid muddy grey vs blue clash */
+    --color-bg: #0f172a; /* slate-900 */
+    --color-card: #111827; /* gray-900 surface */
+    --color-text: #e5e7eb; /* gray-200 */
+    --color-muted: #94a3b8; /* slate-400 */
+    --color-border: #334155; /* slate-700 */
+    --color-accent: #60a5fa; /* blue-400 (more legible on dark) */
+    --color-on-accent: #ffffff; /* keep text on accent white */
+  }
+
+  html {
+    color-scheme: light dark;
+  }
+
+  body {
+    background-color: var(--color-bg);
+    color: var(--color-text);
+  }
+
+  /* Smooth theme transitions, respecting reduced motion */
+  @media (prefers-reduced-motion: no-preference) {
+    :root {
+      --_duration: 200ms;
+    }
+    * {
+      transition: background-color var(--_duration) ease, color var(--_duration) ease,
+        border-color var(--_duration) ease, fill var(--_duration) ease, stroke var(--_duration) ease;
+    }
+  }
+
+  /* Brand accent variants. Switch via <html data-brand="indigo|teal|rose"> */
+  :root[data-theme='light'][data-brand='indigo'] { --color-accent: #4f46e5; /* indigo-600 */ }
+  :root[data-theme='dark'][data-brand='indigo'] { --color-accent: #818cf8; /* indigo-300/400 for legibility */ }
+
+  :root[data-theme='light'][data-brand='teal'] { --color-accent: #0d9488; /* teal-600 */ }
+  :root[data-theme='dark'][data-brand='teal'] { --color-accent: #5eead4; /* teal-300 */ }
+
+  :root[data-theme='light'][data-brand='rose'] { --color-accent: #e11d48; /* rose-600 */ }
+  :root[data-theme='dark'][data-brand='rose'] { --color-accent: #fda4af; /* rose-300 */ }
+}
+
+@layer components {
+  /* A minimal primary button using theme variables */
+  .btn-primary {
+    @apply inline-flex items-center justify-center rounded px-3 py-2 font-medium;
+    background-color: var(--color-accent);
+    color: var(--color-on-accent);
+  }
+  .btn-primary:hover {
+    filter: brightness(0.95);
+  }
+  .card {
+    background-color: var(--color-card);
+    border-color: var(--color-border);
+  }
+}

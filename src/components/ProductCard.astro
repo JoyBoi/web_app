@@ -1,0 +1,323 @@
+---
+import type { Product, ProductImage } from '../lib/types'
+import { formatPrice, whatsappLinkFor } from '../lib/utils'
+
+interface Props {
+  product: Product
+  images?: ProductImage[]
+}
+const { product, images = [] } = Astro.props as Props
+const primaryImage = images[0]?.image_url ?? product.image_url ?? '/favicon.svg'
+const displayImages: string[] = (images.length ? images.map((i) => i.image_url) : [primaryImage]).filter(Boolean)
+const category = product.category || 'General'
+const waLink = whatsappLinkFor(product)
+const publicDefaultWa = import.meta.env.PUBLIC_DEFAULT_WA_NUMBER as string | undefined
+const phoneRaw = product.whatsapp_number || publicDefaultWa || ''
+const phoneDigits = (phoneRaw || '').replace(/\D/g, '')
+const phoneLabel = phoneRaw
+---
+<article class="group relative isolate overflow-hidden rounded-lg border border-[var(--color-border)] bg-[var(--color-card)] shadow-sm transition-transform duration-200 ease-out hover:scale-[1.02] hover:shadow-lg h-full flex flex-col" data-pid={product.id}>
+  <div class="relative aspect-[4/3] w-full" tabindex="0" aria-label="Product images" role="group">
+      <!-- click-through overlay link (z-index below nav buttons) -->
+      <a
+        href={`/product/${product.id}`}
+        class="absolute inset-0 z-10 block"
+        aria-label={`Open product ${product.name}`}
+        data-product-id={product.id}
+      >
+        <span class="sr-only">Open product {product.name}</span>
+      </a>
+      <div id={`gallery-${product.id}`} class="absolute inset-0">
+        {displayImages.map((src, i) => (
+          <img
+            src={src}
+            alt={i === 0 ? product.name : ''}
+            aria-hidden={i === 0 ? 'false' : 'true'}
+            class={`tile-img absolute inset-0 h-full w-full object-cover ${i === 0 ? 'opacity-100' : 'opacity-0'}`}
+            loading="lazy"
+            decoding="async"
+            sizes="(min-width:1024px) 25vw, (min-width:768px) 33vw, 100vw"
+          />
+        ))}
+      </div>
+      {displayImages.length > 1 && (
+        <>
+          <button
+            type="button"
+            data-nav="prev"
+            aria-label="Previous image"
+            aria-controls={`gallery-${product.id}`}
+            class="absolute left-2 top-1/2 z-20 -translate-y-1/2 rounded-full bg-black/50 text-white backdrop-blur-sm ring-1 ring-white/70 w-8 h-8 flex items-center justify-center opacity-0 transition-opacity duration-150 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto focus:outline-none focus:ring-2 focus:ring-white"
+          >
+            <span aria-hidden="true" class="text-sm select-none">‹</span>
+            <span class="sr-only">Previous image</span>
+          </button>
+          <button
+            type="button"
+            data-nav="next"
+            aria-label="Next image"
+            aria-controls={`gallery-${product.id}`}
+            class="absolute right-2 top-1/2 z-20 -translate-y-1/2 rounded-full bg-black/50 text-white backdrop-blur-sm ring-1 ring-white/70 w-8 h-8 flex items-center justify-center opacity-0 transition-opacity duration-150 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto focus:outline-none focus:ring-2 focus:ring-white"
+          >
+            <span aria-hidden="true" class="text-sm select-none">›</span>
+            <span class="sr-only">Next image</span>
+          </button>
+        </>
+      )}
+      {displayImages.length > 1 && (
+        <div class="tile-dots pointer-events-none absolute bottom-2 left-1/2 z-20 -translate-x-1/2 flex gap-1" aria-hidden="true">
+          {displayImages.map((_, i) => (
+            <span class={`h-1.5 w-1.5 rounded-full ${i === 0 ? 'bg-white' : 'bg-white/50'}`}></span>
+          ))}
+        </div>
+      )}
+      {/* subtle overlay with category on hover */}
+      <div class="pointer-events-none absolute inset-0 hidden items-start justify-end bg-gradient-to-t from-black/40 to-transparent p-2 text-xs text-white group-hover:flex">
+        <span class="rounded bg-black/40 px-2 py-1">{category}</span>
+      </div>
+      <!-- quick actions removed per requirements -->
+  </div>
+  <div class="space-y-1 p-3 flex-1 flex flex-col">
+    <h3 class="line-clamp-2 text-sm leading-5 font-medium text-gray-900 dark:text-gray-100 min-h-[2.5rem]">{product.name}</h3>
+    <p class="text-xs text-gray-500 dark:text-gray-400">{category}</p>
+    <div class="flex items-baseline gap-2">
+      <span class="text-base font-semibold text-gray-900 dark:text-gray-100">{formatPrice(product.price)}</span>
+    </div>
+    <div class="mt-2 flex items-center gap-2">
+      <a href={waLink} class="inline-flex items-center rounded-md border border-green-600 px-2 py-1 text-xs text-green-700 hover:bg-green-50 dark:border-green-500 dark:text-green-400 dark:hover:bg-green-900/20" aria-label="WhatsApp buy" target="_blank" rel="noopener noreferrer">WhatsApp</a>
+      {phoneDigits && (
+        <button
+          type="button"
+          data-copy-phone
+          data-phone={phoneDigits}
+          class="relative inline-flex items-center justify-center rounded-md border border-gray-200 w-8 h-8 text-[11px] text-gray-600 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800 transition-all duration-500 ease-out"
+          aria-label="Copy phone number"
+        >
+          <span data-tooltip class="absolute -top-10 left-1/2 -translate-x-1/2 z-10 rounded bg-black/80 text-white text-[10px] px-2 py-0.5 opacity-0 pointer-events-none transition-opacity duration-200">Copy number</span>
+          <span data-label class="absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2 opacity-0 pointer-events-none transition-opacity duration-200">Copied</span>
+          <span class="absolute right-2 top-1/2 -translate-y-1/2" aria-hidden="true">
+            <span data-icon-copy>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M16 1H4a2 2 0 00-2 2v12h2V3h12V1zm3 4H8a2 2 0 00-2 2v12a2 2 0 002 2h11a2 2 0 002-2V7a2 2 0 00-2-2zm0 14H8V7h11v12z"/></svg>
+            </span>
+            <span data-icon-check class="hidden">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+            </span>
+          </span>
+        </button>
+      )}
+    </div>
+  </div>
+  <script>
+    // @ts-check
+    // Hover autoplay carousel and analytics click tracking
+    ;(function () {
+      /** @type {WeakSet<HTMLElement>} */
+      const inited = new WeakSet()
+
+      /** @param {HTMLElement} root */
+      function initCard(root) {
+        if (inited.has(root)) return
+        inited.add(root)
+
+        const link = /** @type {HTMLAnchorElement|null} */ (root.querySelector('a[data-product-id]'))
+        const productIdStr = link?.getAttribute('data-product-id') || ''
+        const productIdNum = Number(productIdStr)
+
+        // Click tracking via sendBeacon (non-blocking)
+        function trackClick() {
+          try {
+            const body = JSON.stringify({ product_id: productIdNum, path: `/product/${productIdStr}` })
+            if (navigator.sendBeacon) {
+              navigator.sendBeacon('/api/track-click', body)
+            } else {
+              fetch('/api/track-click', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body })
+            }
+          } catch {}
+        }
+        link?.addEventListener('click', () => { trackClick() })
+
+        const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+        /** @type {HTMLImageElement[]} */
+        const imgs = [...Array.from(root.querySelectorAll('.tile-img'))].filter(
+          (el) => el instanceof HTMLImageElement
+        )
+        const hasMulti = imgs.length > 1
+        /** @type {HTMLElement[]} */
+        const dots = [...Array.from(root.querySelectorAll('.tile-dots > span'))].filter(
+          (el) => el instanceof HTMLElement
+        )
+        let idx = 0
+        /** @type {number} */ let timer = 0
+        /** @type {number} */ let resumeTimer = 0
+        /** @type {boolean} */ let animating = false
+
+        // logs removed
+
+        /** @param {number} nextIdx */
+        function setVisible(nextIdx) {
+          if (!hasMulti) return
+          const current = imgs[idx]
+          const next = imgs[((nextIdx % imgs.length) + imgs.length) % imgs.length]
+          if (!next || next === current) return
+          animating = true
+          current.setAttribute('aria-hidden', 'true')
+          next.setAttribute('aria-hidden', 'false')
+          current.classList.add('opacity-0')
+          current.classList.remove('opacity-100')
+          next.classList.add('opacity-100')
+          next.classList.remove('opacity-0')
+          idx = imgs.indexOf(next)
+          setTimeout(() => { animating = false }, prefersReducedMotion ? 0 : 250)
+          updateDots()
+          preloadAround(idx)
+        }
+        function showNext() { setVisible(idx + 1) }
+        function showPrev() { setVisible(idx - 1) }
+
+        function updateDots() {
+          if (!dots.length) return
+          for (let i = 0; i < dots.length; i++) {
+            const d = dots[i]
+            if (i === idx) {
+              d.classList.remove('bg-white/50')
+              d.classList.add('bg-white')
+            } else {
+              d.classList.remove('bg-white')
+              d.classList.add('bg-white/50')
+            }
+          }
+        }
+        updateDots()
+
+        /** @param {number} i */
+        function preloadAround(i) {
+          if (!hasMulti) return
+          const nextI = ((i + 1) % imgs.length + imgs.length) % imgs.length
+          const prevI = ((i - 1) % imgs.length + imgs.length) % imgs.length
+          ;[nextI, prevI].forEach((n) => {
+            const neighbor = imgs[n]
+            if (neighbor && neighbor instanceof HTMLImageElement) {
+              const src = neighbor.currentSrc || neighbor.src
+              if (src) { const pre = new Image(); pre.src = src }
+            }
+          })
+        }
+        preloadAround(idx)
+
+        function start() {
+          if (timer || !hasMulti) { return }
+          if (prefersReducedMotion) { return }
+          timer = window.setInterval(() => { showNext() }, 2500)
+        }
+        function stop() {
+          if (timer) { clearInterval(timer); timer = 0 }
+        }
+        function manual() {
+          stop()
+          if (resumeTimer) { clearTimeout(resumeTimer); resumeTimer = 0 }
+          resumeTimer = window.setTimeout(() => { start() }, 2000)
+        }
+
+        root.addEventListener('mouseenter', () => { start() })
+        root.addEventListener('mouseleave', () => { stop() })
+        root.addEventListener('touchstart', () => { stop(); root.classList.add('touching') }, { passive: true })
+        root.addEventListener('touchend', () => { manual(); root.classList.remove('touching') }, { passive: true })
+
+        const prevBtn = /** @type {HTMLButtonElement|null} */ (root.querySelector('[data-nav="prev"]'))
+        const nextBtn = /** @type {HTMLButtonElement|null} */ (root.querySelector('[data-nav="next"]'))
+        /** @type {(e: MouseEvent) => void} */
+        function onPrevClick(e) { e.preventDefault(); e.stopPropagation(); if (!hasMulti || animating) { return; } showPrev(); manual() }
+        /** @type {(e: MouseEvent) => void} */
+        function onNextClick(e) { e.preventDefault(); e.stopPropagation(); if (!hasMulti || animating) { return; } showNext(); manual() }
+        /** @type {(e: TouchEvent) => void} */
+        function onPrevTouch(e) { e.preventDefault(); e.stopPropagation(); if (!hasMulti || animating) { return; } showPrev(); manual() }
+        /** @type {(e: TouchEvent) => void} */
+        function onNextTouch(e) { e.preventDefault(); e.stopPropagation(); if (!hasMulti || animating) { return; } showNext(); manual() }
+        prevBtn?.addEventListener('click', onPrevClick)
+        nextBtn?.addEventListener('click', onNextClick)
+        prevBtn?.addEventListener('touchstart', onPrevTouch, { passive: false })
+        nextBtn?.addEventListener('touchstart', onNextTouch, { passive: false })
+
+        /** @param {KeyboardEvent} e */
+        function onKeydown(e) {
+          const key = e.key
+          if (!hasMulti) return
+          if (key === 'ArrowLeft') { e.preventDefault(); showPrev(); manual() }
+          if (key === 'ArrowRight') { e.preventDefault(); showNext(); manual() }
+        }
+        root.addEventListener('keydown', onKeydown)
+
+        // Copy phone number button
+        const copyBtn = /** @type {HTMLButtonElement|null} */ (root.querySelector('[data-copy-phone]'))
+        if (copyBtn) {
+          const phone = copyBtn.getAttribute('data-phone') || ''
+          const labelEl = /** @type {HTMLElement|null} */ (copyBtn.querySelector('[data-label]'))
+          const iconCopy = /** @type {HTMLElement|null} */ (copyBtn.querySelector('[data-icon-copy]'))
+          const iconCheck = /** @type {HTMLElement|null} */ (copyBtn.querySelector('[data-icon-check]'))
+          function setExpanded(on) {
+            if (on) {
+              copyBtn.classList.add('expanded')
+              labelEl && labelEl.classList.remove('opacity-0')
+              labelEl && labelEl.classList.add('opacity-100')
+              iconCopy && iconCopy.classList.add('hidden')
+              iconCheck && iconCheck.classList.remove('hidden')
+            } else {
+              copyBtn.classList.remove('expanded')
+              labelEl && labelEl.classList.add('opacity-0')
+              labelEl && labelEl.classList.remove('opacity-100')
+              iconCheck && iconCheck.classList.add('hidden')
+              iconCopy && iconCopy.classList.remove('hidden')
+            }
+          }
+          copyBtn.addEventListener('click', async () => {
+            if (!phone) return
+            try {
+              await navigator.clipboard.writeText(phone)
+              setExpanded(true)
+              setTimeout(() => { setExpanded(false) }, 1000)
+            } catch {}
+          })
+        }
+      }
+
+      function run() {
+        /** @type {Set<HTMLElement>} */
+        const set = new Set()
+        const articleEls = Array.from(document.querySelectorAll('article[data-pid]'))
+        const anchorEls = Array.from(document.querySelectorAll('a[data-product-id]'))
+
+        for (const el of articleEls) {
+          if (el instanceof HTMLElement) set.add(el)
+        }
+        for (const el of anchorEls) {
+          if (el instanceof HTMLAnchorElement) {
+            const art = el.closest('article')
+            if (art instanceof HTMLElement) set.add(art)
+          }
+        }
+        set.forEach((root) => initCard(root))
+      }
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', run)
+      } else {
+        run()
+      }
+    })()
+  </script>
+  <style>
+    @media (prefers-reduced-motion: reduce) {
+      .group:hover { transform: none; box-shadow: none; }
+    }
+    .tile-img { transition: opacity .3s ease; will-change: opacity; }
+    /* Mobile/touch: make arrows tappable while touching */
+    .group.touching [data-nav="prev"],
+    .group.touching [data-nav="next"] { opacity: 1 !important; pointer-events: auto !important; }
+
+    /* Copy button expansion */
+    [data-copy-phone].expanded { width: 6rem; }
+    [data-copy-phone] [data-label] { transition: opacity .2s ease; }
+    /* Tooltip visibility */
+    [data-copy-phone]:hover [data-tooltip],
+    [data-copy-phone]:focus-visible [data-tooltip] { opacity: 1; }
+  </style>
+</article>

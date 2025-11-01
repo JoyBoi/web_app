@@ -1,22 +1,118 @@
+---
+import '../styles/tailwind.css';
+import Header from '../components/Header.astro';
+interface Props {
+  title?: string;
+  description?: string;
+  canonical?: string;
+  ogImage?: string;
+  categories?: string[];
+}
+
+const { title = 'Byas Store', description = 'Minimal product catalog', canonical, ogImage, categories = [] } = Astro.props as Props;
+---
 <!doctype html>
-<html lang="en">
+<html lang="en" data-wa-number={import.meta.env.PUBLIC_DEFAULT_WA_NUMBER ?? ''} data-brand={import.meta.env.PUBLIC_BRAND ?? 'indigo'}>
 	<head>
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width" />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 		<meta name="generator" content={Astro.generator} />
-		<title>Astro Basics</title>
-	</head>
-	<body>
+		<title>{title}</title>
+		<meta name="description" content={description} />
+		<link rel="canonical" href={canonical ?? Astro.url.href} />
+		<meta property="og:title" content={title} />
+		<meta property="og:description" content={description} />
+		<meta property="og:type" content="website" />
+		<meta property="og:url" content={Astro.url.href} />
+		{ogImage ? <meta property="og:image" content={ogImage} /> : null}
+		<meta name="twitter:card" content="summary_large_image" />
+
+		<slot name="head" />
+
+		<!-- Theme boot: apply user preference or system before paint to avoid flicker -->
+		<script>
+			{`
+			(function () {
+			  var storageKey = 'byas_theme';
+			  var root = document.documentElement;
+			  /** @param {'light'|'dark'} mode */
+			  function setTheme(mode) {
+			    root.dataset.theme = mode;
+			    if (mode === 'dark') root.classList.add('dark');
+			    else root.classList.remove('dark');
+			  }
+			  try {
+			    var saved = localStorage.getItem(storageKey);
+			    if (saved === 'light' || saved === 'dark') {
+			      setTheme(saved);
+			      return;
+			    }
+			  } catch {}
+			  var prefersDark = false;
+			  try { prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches; } catch {}
+			  setTheme(prefersDark ? 'dark' : 'light');
+			})();
+			`}
+		</script>
+    </head>
+    <body class="min-h-screen">
+        <Header categories={categories} />
+
 		<slot />
-	</body>
+
+        <script>
+            // @ts-check
+            document.addEventListener('DOMContentLoaded', function() {
+                const storageKey = 'byas_theme';
+                const root = document.documentElement;
+                const btn = document.getElementById('themeToggle');
+                const label = btn ? btn.querySelector('[data-theme-label]') : null;
+
+                function setTheme(/** @type {'light'|'dark'} */ mode) {
+                    root.dataset.theme = mode;
+                    if (mode === 'dark') {
+                        root.classList.add('dark');
+                    } else {
+                        root.classList.remove('dark');
+                    }
+                    try { localStorage.setItem(storageKey, mode); } catch {}
+                    if (label) label.textContent = mode === 'dark' ? 'Dark' : 'Light';
+                }
+
+                /** @returns {'light'|'dark'} */
+                function getTheme() {
+                    const current = root.dataset.theme;
+                    if (current === 'dark' || current === 'light') return current;
+                    try {
+                        const saved = localStorage.getItem(storageKey);
+                        if (saved === 'dark' || saved === 'light') return saved;
+                    } catch {}
+                    try {
+                        const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+                        return prefersDark ? 'dark' : 'light';
+                    } catch { return 'light'; }
+                }
+
+                if (btn) {
+                    btn.addEventListener('click', function() {
+                        const current = getTheme();
+                        const next = current === 'dark' ? 'light' : 'dark';
+                        setTheme(next);
+                    });
+                    const initialTheme = getTheme();
+                    setTheme(initialTheme);
+                }
+            });
+        </script>
+    </body>
 </html>
 
 <style>
-	html,
-	body {
-		margin: 0;
-		width: 100%;
-		height: 100%;
-	}
+  html,
+  body {
+    margin: 0;
+    width: 100%;
+    height: 100%;
+  }
 </style>

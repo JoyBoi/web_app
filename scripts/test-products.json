@@ -1,0 +1,146 @@
+[
+  {
+    "name": "Aurora Wireless Earbuds",
+    "description": "Bluetooth 5.3, ANC, 24h battery. Matte black with Type‑C fast charge.",
+    "price": 3499.00,
+    "category": "electronics",
+    "whatsapp_number": "+919876543210",
+    "images": [
+      "https://picsum.photos/id/1011/1200/800.jpg",
+      "https://picsum.photos/id/1012/1200/800.jpg",
+      "https://picsum.photos/id/1015/1200/800.jpg"
+    ]
+  },
+  {
+    "name": "Nimbus Smartwatch S2",
+    "description": "AMOLED 1.39\" display, heart rate, SpO2, GPS. Water resistant 5ATM.",
+    "price": 5999.00,
+    "category": "electronics",
+    "whatsapp_number": "+919812345678",
+    "images": [
+      "https://picsum.photos/id/1050/1200/800.jpg",
+      "https://picsum.photos/id/1057/1200/800.jpg",
+      "https://picsum.photos/id/1058/1200/800.jpg"
+    ]
+  },
+  {
+    "name": "Slate Non‑Stick Frying Pan 28cm",
+    "description": "Triple‑layer coating, induction compatible, oven safe to 220°C.",
+    "price": 2199.00,
+    "category": "home_kitchen",
+    "whatsapp_number": "+918745612309",
+    "images": [
+      "https://picsum.photos/id/1060/1200/800.jpg",
+      "https://picsum.photos/id/1062/1200/800.jpg",
+      "https://picsum.photos/id/1069/1200/800.jpg"
+    ]
+  },
+  {
+    "name": "Harbor Ceramic Vase",
+    "description": "Hand‑glazed stoneware. Neutral palette for modern interiors.",
+    "price": 1499.00,
+    "category": "home_decor",
+    "whatsapp_number": "+919900112233",
+    "images": [
+      "https://picsum.photos/id/1025/1200/800.jpg",
+      "https://picsum.photos/id/1035/1200/800.jpg",
+      "https://picsum.photos/id/1033/1200/800.jpg"
+    ]
+  },
+  {
+    "name": "Ridge Leather Wallet",
+    "description": "Full‑grain leather, RFID blocking, 8 card slots + cash pocket.",
+    "price": 1799.00,
+    "category": "fashion",
+    "whatsapp_number": "+919812340000",
+    "images": [
+      "https://picsum.photos/id/1027/1200/800.jpg",
+      "https://picsum.photos/id/1037/1200/800.jpg",
+      "https://picsum.photos/id/1040/1200/800.jpg"
+    ]
+  },
+  {
+    "name": "TrailRunner Sneakers",
+    "description": "Breathable mesh, EVA midsole, rubber outsole. Daily comfort + grip.",
+    "price": 3299.00,
+    "category": "fashion",
+    "whatsapp_number": "+919700123456",
+    "images": [
+      "https://picsum.photos/id/1043/1200/800.jpg",
+      "https://picsum.photos/id/1044/1200/800.jpg",
+      "https://picsum.photos/id/1045/1200/800.jpg"
+    ]
+  },
+  {
+    "name": "Citrine Vitamin‑C Serum",
+    "description": "10% L‑ascorbic acid, niacinamide, hyaluronic. Brightens + hydrates.",
+    "price": 1299.00,
+    "category": "beauty",
+    "whatsapp_number": "+919833221100",
+    "images": [
+      "https://picsum.photos/id/1048/1200/800.jpg",
+      "https://picsum.photos/id/1049/1200/800.jpg",
+      "https://picsum.photos/id/1051/1200/800.jpg"
+    ]
+  },
+  {
+    "name": "ZenMat Yoga Mat 6mm",
+    "description": "TPE dual‑layer, anti‑slip texture, carry strap included.",
+    "price": 1599.00,
+    "category": "sports",
+    "whatsapp_number": "+919811119999",
+    "images": [
+      "https://picsum.photos/id/1053/1200/800.jpg",
+      "https://picsum.photos/id/1054/1200/800.jpg",
+      "https://picsum.photos/id/1055/1200/800.jpg"
+    ]
+  },
+  {
+    "name": "Mariner LED Camping Lantern",
+    "description": "400‑lumen adjustable brightness, USB‑C rechargeable, IPX4.",
+    "price": 1899.00,
+    "category": "outdoor",
+    "whatsapp_number": "+919844455667",
+    "images": [
+      "https://picsum.photos/id/1064/1200/800.jpg",
+      "https://picsum.photos/id/1067/1200/800.jpg",
+      "https://picsum.photos/id/1068/1200/800.jpg"
+    ]
+  },
+  {
+    "name": "Artisan Coffee Beans 250g",
+    "description": "Arabica blend, notes of chocolate & citrus. Medium roast.",
+    "price": 499.00,
+    "category": "grocery",
+    "whatsapp_number": "+919855667788",
+    "images": [
+      "https://picsum.photos/id/1070/1200/800.jpg",
+      "https://picsum.photos/id/1074/1200/800.jpg",
+      "https://picsum.photos/id/1077/1200/800.jpg"
+    ]
+  },
+  {
+    "name": "Everbook Hardcover Journal",
+    "description": "A5 dotted, 160gsm paper, lay‑flat binding. For notes & sketches.",
+    "price": 899.00,
+    "category": "stationery",
+    "whatsapp_number": "+919866778899",
+    "images": [
+      "https://picsum.photos/id/1080/1200/800.jpg",
+      "https://picsum.photos/id/1081/1200/800.jpg",
+      "https://picsum.photos/id/1082/1200/800.jpg"
+    ]
+  },
+  {
+    "name": "Terra Wooden Puzzle",
+    "description": "Premium birch, 200‑piece geometric puzzle. Ages 8+.",
+    "price": 1199.00,
+    "category": "toys",
+    "whatsapp_number": "+919877665544",
+    "images": [
+      "https://picsum.photos/id/1083/1200/800.jpg",
+      "https://picsum.photos/id/1084/1200/800.jpg",
+      "https://picsum.photos/id/1085/1200/800.jpg"
+    ]
+  }
+]
