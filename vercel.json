@@ -1,0 +1,29 @@
+{
+  "cleanUrls": true,
+  "headers": [
+    {
+      "source": "/",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=0, s-maxage=43200, stale-while-revalidate=60" }
+      ]
+    },
+    {
+      "source": "/index",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=0, s-maxage=43200, stale-while-revalidate=60" }
+      ]
+    },
+    {
+      "source": "/product/(.*)",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=0, s-maxage=43200, stale-while-revalidate=60" }
+      ]
+    },
+    {
+      "source": "/admin",
+      "headers": [
+        { "key": "Cache-Control", "value": "no-store" }
+      ]
+    }
+  ]
+}

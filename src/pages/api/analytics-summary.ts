@@ -37,9 +37,10 @@ export const GET: APIRoute = async ({ request }) => {
       grouped[key].push(row);
     }
 
+    // Public analytics summary can be cached at the edge for 12h, SWR 60s
     return new Response(JSON.stringify({ days, since: since.toISOString().slice(0, 10), products: grouped }), {
       status: 200,
-      headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' },
+      headers: { 'Content-Type': 'application/json', 'Cache-Control': 's-maxage=43200, stale-while-revalidate=60' },
     });
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : String(e);

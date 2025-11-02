@@ -6,10 +6,25 @@ interface Props {
   description?: string;
   canonical?: string;
   ogImage?: string;
+  ogType?: 'website' | 'product';
+  ogPrice?: number | string;
+  ogCurrency?: string;
+  ogImageWidth?: number;
+  ogImageHeight?: number;
   categories?: string[];
 }
-
-const { title = 'Byas Store', description = 'Minimal product catalog', canonical, ogImage, categories = [] } = Astro.props as Props;
+const {
+  title = 'Byas Store',
+  description = 'Minimal product catalog',
+  canonical,
+  ogImage,
+  ogType = 'website',
+  ogPrice,
+  ogCurrency,
+  ogImageWidth,
+  ogImageHeight,
+  categories = []
+} = Astro.props as Props;
 ---
 <!doctype html>
 <html lang="en" data-wa-number={import.meta.env.PUBLIC_DEFAULT_WA_NUMBER ?? ''} data-brand={import.meta.env.PUBLIC_BRAND ?? 'indigo'}>
@@ -23,9 +38,31 @@ const { title = 'Byas Store', description = 'Minimal product catalog', canonical
 		<link rel="canonical" href={canonical ?? Astro.url.href} />
 		<meta property="og:title" content={title} />
 		<meta property="og:description" content={description} />
-		<meta property="og:type" content="website" />
+		<meta property="og:type" content={ogType} />
 		<meta property="og:url" content={Astro.url.href} />
-		{ogImage ? <meta property="og:image" content={ogImage} /> : null}
+    <meta property="og:site_name" content="Byas Store" />
+    {(() => {
+      const base = import.meta.env.PUBLIC_SITE_URL || Astro.url.href;
+      const absolute = ogImage ? (ogImage.startsWith('http') ? ogImage : new URL(ogImage, base).href) : undefined;
+      const w = ogImageWidth ?? 1200;
+      const h = ogImageHeight ?? 630;
+      return absolute ? (
+        <>
+          <meta property="og:image" content={absolute} />
+          <meta property="og:image:secure_url" content={absolute} />
+          <meta property="og:image:alt" content={title} />
+          <meta property="og:image:width" content={String(w)} />
+          <meta property="og:image:height" content={String(h)} />
+          <meta name="twitter:image" content={absolute} />
+        </>
+      ) : null;
+    })()}
+		{ogType === 'product' && ogPrice ? (
+			<>
+				<meta property="product:price:amount" content={String(ogPrice)} />
+				<meta property="product:price:currency" content={ogCurrency || 'INR'} />
+			</>
+		) : null}
 		<meta name="twitter:card" content="summary_large_image" />
 
 		<slot name="head" />

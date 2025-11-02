@@ -10,7 +10,8 @@ const { product, images = [] } = Astro.props as Props
 const primaryImage = images[0]?.image_url ?? product.image_url ?? '/favicon.svg'
 const displayImages: string[] = (images.length ? images.map((i) => i.image_url) : [primaryImage]).filter(Boolean)
 const category = product.category || 'General'
-const waLink = whatsappLinkFor(product)
+const productUrl = new URL(`/product/${product.id}`, import.meta.env.PUBLIC_SITE_URL || Astro.url.href).href
+const waLink = whatsappLinkFor(product, undefined, productUrl)
 const publicDefaultWa = import.meta.env.PUBLIC_DEFAULT_WA_NUMBER as string | undefined
 const phoneRaw = product.whatsapp_number || publicDefaultWa || ''
 const phoneDigits = (phoneRaw || '').replace(/\D/g, '')

@@ -11,6 +11,26 @@ const allowedAdmins = (import.meta.env.ALLOWED_ADMIN_EMAILS || process.env.ALLOW
 
 const supabase = createClient(supabaseUrl!, serviceKey!);
 
+// Simple per-IP token bucket to rate limit admin product uploads
+const BUCKET_WINDOW_MS = 60_000; // 1 minute
+const BUCKET_CAPACITY = 10; // 10 requests per window
+const buckets: Map<string, { tokens: number; resetAt: number }> = new Map();
+
+function rateLimit(ip: string): { ok: boolean; retryAfter?: number } {
+  const now = Date.now();
+  const b = buckets.get(ip);
+  if (!b || now >= b.resetAt) {
+    buckets.set(ip, { tokens: BUCKET_CAPACITY - 1, resetAt: now + BUCKET_WINDOW_MS });
+    return { ok: true };
+  }
+  if (b.tokens <= 0) {
+    return { ok: false, retryAfter: Math.ceil((b.resetAt - now) / 1000) };
+  }
+  b.tokens -= 1;
+  buckets.set(ip, b);
+  return { ok: true };
+}
+
 function isValidPhone(s: string) {
   // Allow empty (will fall back to DEFAULT_WA_NUMBER on frontend).
   // If provided, must be an Indian number: 10 digits with country code 91 -> total 12 digits after normalization.
@@ -23,6 +43,15 @@ function isValidPrice(s: string) {
 
 export const POST: APIRoute = async ({ request }) => {
   try {
+    // Naive per-IP rate limit to protect admin route
+    const ip = (request.headers.get('x-forwarded-for') || '').split(',')[0].trim() || 'local';
+    const rl = rateLimit(ip);
+    if (!rl.ok) {
+      return new Response(JSON.stringify({ error: 'Too Many Requests' }), {
+        status: 429,
+        headers: rl.retryAfter ? { 'Retry-After': String(rl.retryAfter), 'Cache-Control': 'no-store' } : { 'Cache-Control': 'no-store' },
+      });
+    }
     const auth = request.headers.get('authorization');
     if (!auth?.startsWith('Bearer ')) {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });

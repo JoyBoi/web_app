@@ -11,10 +11,11 @@ export const applyDiscount = (price: number, discountPct?: number): { final: num
   return { final, pct }
 }
 
-export const whatsappLinkFor = (product: Product, phone?: string): string => {
+export const whatsappLinkFor = (product: Product, phone?: string, productUrl?: string): string => {
   const defaultPhone = import.meta.env.DEFAULT_WA_NUMBER as string | undefined
   const number = (phone || product.whatsapp_number || defaultPhone || '').replace(/\D/g, '')
-  const text = `Hi! I am interested in ${product.name}`
+  const baseText = `Hi! I am interested in ${product.name}`
+  const text = productUrl ? `${baseText}\n${productUrl}` : baseText
   return `https://wa.me/${number}?text=${encodeURIComponent(text)}`
 }
 

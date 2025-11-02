@@ -42,7 +42,18 @@ const { products, imagesByProduct } = Astro.props as Props
         }
       }
       const url = new URL(window.location.href)
-      currentCategory = url.searchParams.get('category') || undefined
+      const rawParam = url.searchParams.get('category') || ''
+      // Canonicalize common synonyms to our enum: fashion | beauty | footwear
+      const canonical = (val) => {
+        const v = (val || '').trim().toLowerCase()
+        const map = {
+          fashion: 'fashion', clothing: 'fashion', apparel: 'fashion', men: 'fashion', women: 'fashion', kids: 'fashion',
+          beauty: 'beauty', cosmetics: 'beauty', skincare: 'beauty', makeup: 'beauty', 'personal care': 'beauty',
+          footwear: 'footwear', shoes: 'footwear', sneakers: 'footwear', sandals: 'footwear', boots: 'footwear',
+        }
+        return map[v] || undefined
+      }
+      currentCategory = canonical(rawParam) || undefined
       applyFilter(undefined, currentCategory || undefined)
       window.addEventListener('byas:search', /** @type {(e: Event) => void} */ (e) => {
         const ce = /** @type {CustomEvent} */ (e)
@@ -53,7 +64,7 @@ const { products, imagesByProduct } = Astro.props as Props
       window.addEventListener('byas:category', /** @type {(e: Event) => void} */ (e) => {
         const ce = /** @type {CustomEvent} */ (e)
         const detail = /** @type {{ category?: string }} */ (ce.detail || {})
-        currentCategory = (detail.category || '').trim() || undefined
+        currentCategory = canonical(detail.category || '') || undefined
         applyFilter(currentQ, currentCategory)
       })
     })

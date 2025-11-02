@@ -80,7 +80,8 @@ if (!supabaseUrl || !anon) {
   }
 }
 
-const wa = product ? whatsappLinkFor(product) : '#';
+const pageUrl = import.meta.env.PUBLIC_SITE_URL ? new URL(Astro.url.pathname, import.meta.env.PUBLIC_SITE_URL).href : Astro.url.href;
+const wa = product ? whatsappLinkFor(product, undefined, pageUrl) : '#';
 const publicDefaultWa = import.meta.env.PUBLIC_DEFAULT_WA_NUMBER as string | undefined;
 const phoneRaw = (product?.whatsapp_number || publicDefaultWa || '');
 const phoneDigits = (phoneRaw || '').replace(/\D/g, '');
@@ -91,6 +92,9 @@ const phoneDigits = (phoneRaw || '').replace(/\D/g, '');
   description={(product?.description ?? '').slice(0, 160) || `${product?.name ?? 'Product'} details`}
   canonical={Astro.url.href}
   ogImage={(images[0]?.image_url) ?? (product?.image_url ?? undefined)}
+  ogType="product"
+  ogPrice={product?.price ?? undefined}
+  ogCurrency="INR"
 >
   {product ? (
     <script slot="head" type="application/ld+json">
