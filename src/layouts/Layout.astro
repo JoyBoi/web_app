@@ -42,7 +42,7 @@ const {
 		<meta property="og:url" content={Astro.url.href} />
     <meta property="og:site_name" content="Byas Store" />
     {(() => {
-      const base = import.meta.env.PUBLIC_SITE_URL || Astro.url.href;
+      const base = (Astro.site?.href || import.meta.env.PUBLIC_SITE_URL || Astro.url.href);
       const absolute = ogImage ? (ogImage.startsWith('http') ? ogImage : new URL(ogImage, base).href) : undefined;
       const w = ogImageWidth ?? 1200;
       const h = ogImageHeight ?? 630;

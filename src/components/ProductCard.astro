@@ -10,7 +10,10 @@ const { product, images = [] } = Astro.props as Props
 const primaryImage = images[0]?.image_url ?? product.image_url ?? '/favicon.svg'
 const displayImages: string[] = (images.length ? images.map((i) => i.image_url) : [primaryImage]).filter(Boolean)
 const category = product.category || 'General'
-const productUrl = new URL(`/product/${product.id}`, import.meta.env.PUBLIC_SITE_URL || Astro.url.href).href
+const productPath = `/product/${product.id}`
+const productUrl = import.meta.env.PUBLIC_SITE_URL
+  ? new URL(productPath, import.meta.env.PUBLIC_SITE_URL).href
+  : productPath
 const waLink = whatsappLinkFor(product, undefined, productUrl)
 const publicDefaultWa = import.meta.env.PUBLIC_DEFAULT_WA_NUMBER as string | undefined
 const phoneRaw = product.whatsapp_number || publicDefaultWa || ''
@@ -85,7 +88,17 @@ const phoneLabel = phoneRaw
       <span class="text-base font-semibold text-gray-900 dark:text-gray-100">{formatPrice(product.price)}</span>
     </div>
     <div class="mt-2 flex items-center gap-2">
-      <a href={waLink} class="inline-flex items-center rounded-md border border-green-600 px-2 py-1 text-xs text-green-700 hover:bg-green-50 dark:border-green-500 dark:text-green-400 dark:hover:bg-green-900/20" aria-label="WhatsApp buy" target="_blank" rel="noopener noreferrer">WhatsApp</a>
+      <a
+        href={waLink}
+        data-ensure-absolute="true"
+        data-wa-path={productPath}
+        data-wa-number={phoneDigits}
+        data-wa-name={product.name}
+        class="inline-flex items-center rounded-md border border-green-600 px-2 py-1 text-xs text-green-700 hover:bg-green-50 dark:border-green-500 dark:text-green-400 dark:hover:bg-green-900/20"
+        aria-label="WhatsApp buy"
+        target="_blank"
+        rel="noopener noreferrer"
+      >WhatsApp</a>
       {phoneDigits && (
         <button
           type="button"
@@ -247,6 +260,24 @@ const phoneLabel = phoneRaw
           if (key === 'ArrowRight') { e.preventDefault(); showNext(); manual() }
         }
         root.addEventListener('keydown', onKeydown)
+
+        // Runtime harden WhatsApp link: ensure absolute URL on client (fixes localhost baked in builds)
+        try {
+          const waAnchor = /** @type {HTMLAnchorElement|null} */ (root.querySelector('a[data-ensure-absolute="true"]'))
+          if (waAnchor) {
+            const origin = window.location.origin
+            const path = waAnchor.getAttribute('data-wa-path') || ''
+            const num = waAnchor.getAttribute('data-wa-number') || ''
+            const name = waAnchor.getAttribute('data-wa-name') || 'this product'
+            const phone = num.replace(/\D/g, '')
+            if (path && phone) {
+              const absoluteUrl = origin + path
+              const msg = `Hi! I am interested in ${name} ${absoluteUrl}`
+              const href = `https://wa.me/${phone}?text=${encodeURIComponent(msg)}`
+              waAnchor.setAttribute('href', href)
+            }
+          }
+        } catch {}
 
         // Copy phone number button
         const copyBtn = /** @type {HTMLButtonElement|null} */ (root.querySelector('[data-copy-phone]'))

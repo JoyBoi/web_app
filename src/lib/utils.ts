@@ -12,7 +12,8 @@ export const applyDiscount = (price: number, discountPct?: number): { final: num
 }
 
 export const whatsappLinkFor = (product: Product, phone?: string, productUrl?: string): string => {
-  const defaultPhone = import.meta.env.DEFAULT_WA_NUMBER as string | undefined
+  // Prefer public default for UI consistency; server-only DEFAULT_WA_NUMBER remains available for scripts
+  const defaultPhone = (import.meta.env.PUBLIC_DEFAULT_WA_NUMBER as string | undefined) || (import.meta.env.DEFAULT_WA_NUMBER as string | undefined)
   const number = (phone || product.whatsapp_number || defaultPhone || '').replace(/\D/g, '')
   const baseText = `Hi! I am interested in ${product.name}`
   const text = productUrl ? `${baseText}\n${productUrl}` : baseText
